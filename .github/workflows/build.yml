@@ -3,16 +3,10 @@ name: build-clipboard-sync
 on:
 workflow_dispatch:
 push:
-paths:
-- 'clipboard-sync/**'
-- '.github/workflows/build-clipboard-sync.yml'
 
 jobs:
 build-windows:
 runs-on: windows-latest
-defaults:
-run:
-working-directory: clipboard-sync
 steps:
 - name: Checkout
 uses: actions/checkout@v4
@@ -44,16 +38,14 @@ Copy-Item PACKAGING.md out\PACKAGING.md
 uses: actions/upload-artifact@v4
 with:
 name: clipboard-sync-windows
-path: clipboard-sync/out/*
+path: out/*
 
 build-macos:
 runs-on: macos-latest
-defaults:
-run:
-working-directory: clipboard-sync
 steps:
 - name: Checkout
 uses: actions/checkout@v4
+
 - name: Setup Python
 uses: actions/setup-python@v5
 with:
@@ -67,6 +59,7 @@ python3 -m pip install pyinstaller -r requirements.txt
 - name: Build binary
 run: |
 pyinstaller --noconfirm --clean --onefile --name clipboard-sync clipboard_sync.py
+
 - name: Prepare bundle
 run: |
 mkdir -p out
@@ -81,4 +74,4 @@ chmod +x out/clipboard-sync out/run-macos.sh
 uses: actions/upload-artifact@v4
 with:
 name: clipboard-sync-macos
-path: clipboard-sync/out/*
+path: out/*
