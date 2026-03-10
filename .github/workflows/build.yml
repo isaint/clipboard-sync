@@ -1,0 +1,84 @@
+name: build-clipboard-sync
+
+on:
+workflow_dispatch:
+push:
+paths:
+- 'clipboard-sync/**'
+- '.github/workflows/build-clipboard-sync.yml'
+
+jobs:
+build-windows:
+runs-on: windows-latest
+defaults:
+run:
+working-directory: clipboard-sync
+steps:
+- name: Checkout
+uses: actions/checkout@v4
+
+- name: Setup Python
+uses: actions/setup-python@v5
+with:
+python-version: '3.11'
+
+- name: Install deps
+run: |
+python -m pip install --upgrade pip
+python -m pip install pyinstaller -r requirements.txt
+- name: Build exe
+shell: pwsh
+run: |
+pyinstaller --noconfirm --clean --onefile --name clipboard-sync clipboard_sync.py
+
+- name: Prepare bundle
+shell: pwsh
+run: |
+New-Item -ItemType Directory -Force -Path out | Out-Null
+Copy-Item dist\clipboard-sync.exe out\clipboard-sync.exe
+Copy-Item run-windows-template.bat out\run-windows.bat
+Copy-Item windows-startup-install.bat out\windows-startup-install.bat
+Copy-Item README.md out\README.md
+Copy-Item PACKAGING.md out\PACKAGING.md
+- name: Upload artifact
+uses: actions/upload-artifact@v4
+with:
+name: clipboard-sync-windows
+path: clipboard-sync/out/*
+
+build-macos:
+runs-on: macos-latest
+defaults:
+run:
+working-directory: clipboard-sync
+steps:
+- name: Checkout
+uses: actions/checkout@v4
+- name: Setup Python
+uses: actions/setup-python@v5
+with:
+python-version: '3.11'
+
+- name: Install deps
+run: |
+python3 -m pip install --upgrade pip
+python3 -m pip install pyinstaller -r requirements.txt
+
+- name: Build binary
+run: |
+pyinstaller --noconfirm --clean --onefile --name clipboard-sync clipboard_sync.py
+- name: Prepare bundle
+run: |
+mkdir -p out
+cp dist/clipboard-sync out/clipboard-sync
+cp run-macos-template.sh out/run-macos.sh
+cp README.md out/README.md
+cp PACKAGING.md out/PACKAGING.md
+cp macos/com.sant.clipboard-sync.plist out/com.sant.clipboard-sync.plist
+chmod +x out/clipboard-sync out/run-macos.sh
+
+- name: Upload artifact
+uses: actions/upload-artifact@v4
+with:
+name: clipboard-sync-macos
+path: clipboard-sync/out/*
